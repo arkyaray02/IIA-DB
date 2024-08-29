@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IIA-DB GUI</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f4f9;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #4a90e2;
+            margin-bottom: 20px;
+        }
+        #filter-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        label {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        select {
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+        #count-display {
+            font-weight: bold;
+            color: red;
+        }
+        table {
+            width: 100%;
+            max-width: 1000px;
+            margin: 0 auto;
+            border-collapse: collapse;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            background-color: #fff;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #4a90e2;
+            color: #fff;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        /* Mobile View */
+        @media (max-width: 600px) {
+            #filter-container {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            select {
+                width: 100%;
+                margin-bottom: 10px;
+            }
+            table, th, td {
+                font-size: 14px;
+                padding: 8px;
+            }
+            th {
+                font-size: 16px;
+            }
+            #count-display {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Tickets Data</h1>
+    <div id="filter-container">
+        <label for="batch-filter">Filter by Batch:</label>
+        <select id="batch-filter" onchange="fetchData()">
+            <option value="all">All</option>
+            <option value="1st year">1st Year</option>
+            <option value="2nd year">2nd Year</option>
+            <option value="3rd year">3rd Year</option>
+            <option value="passout">Passout</option>
+        </select>
+        <br>
+        <div id="count-display"></div>
+    </div>
+    <div id="data-container"></div>
+
+    <script>
+        async function fetchData() {
+            const url = 'https://pkwpcvmgdabgbwwfawsg.supabase.co/rest/v1/tickets';
+            const apiKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBrd3Bjdm1nZGFiZ2J3d2Zhd3NnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTcyNDMzNTY5MCwiZXhwIjoyMDM5OTExNjkwfQ.BandSmTq79mjSdkKUSLeqnnpJ5wbdyawjWoi-mglZzo';
+
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'apikey': apiKey,
+                    'Authorization': `Bearer ${apiKey}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            const data = await response.json();
+            const container = document.getElementById('data-container');
+            const countDisplay = document.getElementById('count-display');
+            container.innerHTML = ''; // Clear previous table
+            countDisplay.innerHTML = ''; // Clear previous count
+
+            // Get selected filter value
+            const filter = document.getElementById('batch-filter').value;
+
+            // Create a table element
+            const table = document.createElement('table');
+            const thead = document.createElement('thead');
+            const tbody = document.createElement('tbody');
+
+            // Define the columns to display
+            const columns = ['holders_name', 'holders_email', 'price', 'batch', 'screenshot'];
+            const headerRow = document.createElement('tr');
+
+            // Create table headers
+            columns.forEach(column => {
+                const th = document.createElement('th');
+                th.textContent = column.replace(/_/g, ' ').toUpperCase();
+                headerRow.appendChild(th);
+            });
+
+            thead.appendChild(headerRow);
+            table.appendChild(thead);
+
+            // Populate table rows with data and count matches
+            let rowCount = 0;
+
+            data.forEach(item => {
+                // Apply filter
+                if (filter === 'all' || item.batch.toLowerCase() === filter.toLowerCase()) {
+                    const row = document.createElement('tr');
+                    
+                    columns.forEach(column => {
+                        const td = document.createElement('td');
+                        td.textContent = item[column] || 'N/A';
+                        row.appendChild(td);
+                    });
+
+                    tbody.appendChild(row);
+                    rowCount++;
+                }
+            });
+
+            table.appendChild(tbody);
+            container.appendChild(table);
+
+            // Display the count of rows
+            countDisplay.textContent = `Number of entries: ${rowCount}`;
+        }
+
+        // Fetch data initially
+        fetchData();
+    </script>
+</body>
+</html>
